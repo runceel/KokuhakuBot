@@ -10,13 +10,9 @@ namespace KokuhakuBot.Flow.Models
 {
     public class KokuhakuInformation
     {
-        [JsonProperty("from")]
-        public ChannelAccount From { get; set; }
-        [JsonProperty("botAccount")]
-        public ChannelAccount BotAccount { get; set; }
+        [JsonProperty("activity")]
+        public Activity Activity { get; set; }
         [JsonProperty("targetEmail")]
         public string TargetEmail { get; set; }
-        [JsonProperty("serviceUrl")]
-        public string ServiceUrl { get; set; }
     }
 }

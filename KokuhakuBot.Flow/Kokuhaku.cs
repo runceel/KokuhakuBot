@@ -16,6 +16,7 @@ namespace KokuhakuBot.Flow
 {
     public static class Kokuhaku
     {
+        private static string SlackEmailFormatPrefix { get; } = "<mailto:";
         [FunctionName(nameof(Start))]
         public static async Task<HttpResponseMessage> Start(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequestMessage req, 
@@ -23,6 +24,7 @@ namespace KokuhakuBot.Flow
             TraceWriter log)
         {
             var info = JsonConvert.DeserializeObject<KokuhakuInformation>(await req.Content.ReadAsStringAsync());
+            log.Info($"KokuhakuInformation: {JsonConvert.SerializeObject(info)}");
             var instanceId = await client.StartNewAsync(nameof(StartKokuhakuWorkflow), info);
             return client.CreateCheckStatusResponse(req, instanceId);
         }
@@ -48,7 +50,8 @@ namespace KokuhakuBot.Flow
         [FunctionName(nameof(SendEmail))]
         public static void SendEmail(
             [ActivityTrigger] DurableActivityContext context,
-            [SendGrid] out Mail message)
+            [SendGrid] out Mail message,
+            TraceWriter log)
         {
             var info = context.GetInput<KokuhakuInformation>();
             var approvalEndpoint = ConfigurationManager.AppSettings["KokuhakuApprovalEndpoint"];
@@ -59,7 +62,15 @@ namespace KokuhakuBot.Flow
             };
 
             var personalization = new Personalization();
-            personalization.AddTo(new Email(info.TargetEmail));
+            var toEmail = info.TargetEmail;
+            if (toEmail.StartsWith(SlackEmailFormatPrefix)) // for slack email address format.
+            {
+                var endIndex = toEmail.IndexOf('|');
+                toEmail = toEmail.Substring(SlackEmailFormatPrefix.Length, endIndex - SlackEmailFormatPrefix.Length);
+            }
+
+            log.Info($"To: {toEmail}, Org: {info.TargetEmail}");
+            personalization.AddTo(new Email(toEmail));
             message.AddPersonalization(personalization);
             message.From = new Email(fromEmail);
             message.AddContent(new Content
@@ -68,7 +79,7 @@ namespace KokuhakuBot.Flow
                 Value = $@"<html>
 <body>
 <h2>要求</h2>
-我君ヲ愛ス。{info.From.Name}ヨリ。
+我君ヲ愛ス。{info.Activity.From.Name}ヨリ。
 <hr />
 <h2>回答</h2>
 <a href='{approvalEndpoint}?instanceId={context.InstanceId}&approved=true'>受けて立つ場合はこちらをクリック</a>
@@ -84,17 +95,7 @@ namespace KokuhakuBot.Flow
             [ActivityTrigger] DurableActivityContext context,
             TraceWriter log)
         {
-            var info = context.GetInput<KokuhakuInformation>();
-            var client = new ConnectorClient(new Uri(info.ServiceUrl));
-            var conversation = await client.Conversations.CreateDirectConversationAsync(info.BotAccount, info.From);
-            var activity = new Activity
-            {
-                Text = "告白成功したよ！",
-                Recipient = info.From,
-                From = info.BotAccount,
-                Conversation = new ConversationAccount(id: conversation.Id),
-            };
-            await client.Conversations.SendToConversationAsync(activity);
+            await ReplyAsync(context, "告白成功したよ！", log);
         }
 
         [FunctionName(nameof(Reject))]
@@ -102,13 +103,7 @@ namespace KokuhakuBot.Flow
             [ActivityTrigger] DurableActivityContext context,
             TraceWriter log)
         {
-            var info = context.GetInput<KokuhakuInformation>();
-            var client = new ConnectorClient(new Uri(info.ServiceUrl));
-            var activity = new Activity
-            {
-                Text = "まぁ…その…なんだ…ドンマイ。",
-            };
-            await client.Conversations.SendToConversationAsync(activity);
+            await ReplyAsync(context, "まぁ…その…なんだ…ドンマイ。", log);
         }
 
         [FunctionName(nameof(Approval))]
@@ -122,5 +117,15 @@ namespace KokuhakuBot.Flow
             var approved = bool.Parse(req.GetQueryNameValuePairs().First(x => x.Key == "approved").Value);
             await client.RaiseEventAsync(instanceId, "Approval", approved);
         }
+
+        private static async Task ReplyAsync(DurableActivityContext context, string message, TraceWriter log)
+        {
+            var info = context.GetInput<KokuhakuInformation>();
+            log.Info($"KokuhakuInformation: {JsonConvert.SerializeObject(info)}");
+            var client = new ConnectorClient(new Uri(info.Activity.ServiceUrl));
+            var reply = info.Activity.CreateReply(message);
+            await client.Conversations.ReplyToActivityAsync(reply);
+        }
+
     }
 }

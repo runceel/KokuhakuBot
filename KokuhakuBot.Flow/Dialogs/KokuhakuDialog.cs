@@ -1,5 +1,6 @@
 ﻿using KokuhakuBot.Flow.Models;
 using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -25,9 +26,7 @@ namespace KokuhakuBot.Flow.Dialogs
             var targetEmail = await result;
             var info = new KokuhakuInformation
             {
-                From = context.Activity.From,
-                BotAccount = context.Activity.Recipient,
-                ServiceUrl = context.Activity.ServiceUrl,
+                Activity = (Activity)context.Activity,
                 TargetEmail = targetEmail,
             };
 

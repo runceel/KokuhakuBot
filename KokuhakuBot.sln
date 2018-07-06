@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokuhakuBot", "KokuhakuBot\KokuhakuBot.csproj", "{A6141E1A-1BC3-461C-A713-EEF2584869CA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A6141E1A-1BC3-461C-A713-EEF2584869CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6141E1A-1BC3-461C-A713-EEF2584869CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6141E1A-1BC3-461C-A713-EEF2584869CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6141E1A-1BC3-461C-A713-EEF2584869CA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC78CA7C-EC72-4037-909C-09666AE7DD69}
+	EndGlobalSection
+EndGlobal
